@@ -37,6 +37,7 @@ function isFileExplorerView(view: View): view is FileExplorerView {
 
 export default class ObsidianIgnore extends Plugin {
 	settings: Settings
+	filesToIgnore: string[]
 
 	async onload() {
 		await this.loadSettings()
@@ -48,9 +49,8 @@ export default class ObsidianIgnore extends Plugin {
 		// TODO: Restore ignored files on unload
 	}
 
-	// TODO: Allow ignoring more than one file
 	processFile(file: TAbstractFile) {
-		if (file.name === this.settings.ignoredFiles) {
+		if (this.filesToIgnore.contains(file.name)) {
 			this.removeIgnoredFile(file.name)
 		}
 	}
@@ -61,6 +61,7 @@ export default class ObsidianIgnore extends Plugin {
 			console.warn(`Could not find file "${name}" to ignore`)
 		} else {
 			delete this.app.vault.fileMap[name]
+			this.filesToIgnore.remove(name)
 			this.reloadFileExplorer()
 		}
 	}
@@ -76,7 +77,10 @@ export default class ObsidianIgnore extends Plugin {
 	}
 
 	async loadSettings() {
+		console.log('Loading settings...')
 		this.settings = Object.assign({}, DEFAULTS, await this.loadData())
+		this.filesToIgnore = this.settings.ignoredFiles.split(',')
+		console.log('Files to ignore: ' + JSON.stringify(this.filesToIgnore))
 	}
 
 	async saveSettings() {
